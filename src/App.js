@@ -1,23 +1,45 @@
-import logo from './logo.svg';
-import './App.css';
+import "./App.css";
+import CurrentWeather from "./components/CurrentWeather";
+import Search from "./components/Search";
+import { weatherApiKey, weatherApiURl } from "./api";
+import { useState } from "react";
+import Forcast from "./components/Forcast";
 
 function App() {
+  const [weather, setweather] = useState(null);
+  const [forcast, setforcast] = useState(null);
+  const [cond, setcond] = useState(false);
+
+  function handleOnSearchChange(result) {
+    console.log("result", result);
+    const [lat, lon] = result.value.split(",");
+    console.log("lat", lat);
+    console.log("lon", lon);
+
+    const currentWeather = fetch(
+      `${weatherApiURl}/weather?lat=${lat}&lon=${lon}&appid=${weatherApiKey}&units=metric`
+    );
+    const forcastWeather = fetch(
+      `${weatherApiURl}/forecast?id=524901&lat=${lat}&lon=${lon}&appid=${weatherApiKey}&units=metric`
+    );
+    Promise.all([currentWeather, forcastWeather])
+      .then(async (response) => {
+        const weatherResponse = await response[0].json();
+        const forcastResponse = await response[1].json();
+        setforcast(forcastResponse);
+        setweather(weatherResponse);
+        setcond(true)
+      })
+      .catch((err) => console.log(err));
+
+      console.log("newdata",forcast,weather)
+  }
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="app">
+      <Search onSearchChange={handleOnSearchChange} />
+     {cond?<CurrentWeather data={[weather,forcast]} />:null} 
+     {cond?<Forcast data={[weather,forcast]} />:null} 
+
     </div>
   );
 }
